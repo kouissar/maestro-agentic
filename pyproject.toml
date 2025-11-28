@@ -1,0 +1,15 @@
+[project]
+name = "gemini3-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "google-adk>=1.19.0",
+    "google-genai>=1.52.0",
+    "python-dotenv>=1.2.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["*_agent"]
+exclude = ["web_ui", "k8s", "workouts"]

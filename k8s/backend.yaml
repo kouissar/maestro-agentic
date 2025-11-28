@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      dnsPolicy: Default
+      containers:
+        - name: backend
+          image: gemini3-backend:latest # Replace with your actual image name
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            # You should create a secret named 'gemini-secrets' with your GOOGLE_API_KEY
+            # kubectl create secret generic gemini-secrets --from-literal=GOOGLE_API_KEY=your_key
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gemini-secrets
+                  key: GOOGLE_API_KEY
+                  optional: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP

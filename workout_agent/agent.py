@@ -1,0 +1,58 @@
+from google.adk.agents import Agent
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.genai import types
+import asyncio
+from dotenv import load_dotenv
+from workout_agent.tools import save_workout, list_workouts, read_workout
+
+load_dotenv()
+
+APP_NAME = "workout_agent"
+USER_ID = "user1234"
+SESSION_ID = "1234"
+
+root_agent = Agent(
+    name="workout_agent",
+    model="gemini-2.5-flash",
+    description="Agent to generate and manage workouts.",
+    instruction="""
+    You are a fitness assistant designed to help users generate and manage their workouts.
+    
+    Your capabilities include:
+    1.  **Generating Workouts**: Create custom workout plans based on user preferences such as location (home/gym), duration, focus area, and equipment available.
+    2.  **Saving Workouts**: When a user is happy with a generated workout, save it to the file system using the 'save_workout' tool. You MUST ask for a name if one isn't provided.
+    3.  **Listing Workouts**: Retrieve a list of previously saved workouts using the 'list_workouts' tool.
+    4.  **Retrieving Workouts**: Read the details of a specific saved workout using the 'read_workout' tool.
+
+    When generating a workout:
+    -   Be specific with exercises, sets, and reps (or duration).
+    -   Consider the user's constraints (e.g., "home workout" implies limited equipment unless specified otherwise).
+    -   Format the output clearly.
+
+    Always check if the user wants to save the workout after generating it.
+    """,
+    tools=[save_workout, list_workouts, read_workout]
+)
+
+# Session and Runner
+async def setup_session_and_runner():
+    session_service = InMemorySessionService()
+    session = await session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
+    runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
+    return session, runner
+
+# Agent Interaction
+async def call_agent_async(query):
+    content = types.Content(role='user', parts=[types.Part(text=query)])
+    session, runner = await setup_session_and_runner()
+    events = runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content)
+
+    async for event in events:
+        if event.is_final_response():
+            final_response = event.content.parts[0].text
+            print("Agent Response: ", final_response)
+
+if __name__ == "__main__":
+    # Example usage
+    asyncio.run(call_agent_async("Generate a 15 minute home HIIT workout for legs and save it as 'Leg_Blaster_15'"))
