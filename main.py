@@ -3,7 +3,7 @@ import sys
 from orchestrator_agent.agent import call_agent_async
 
 def main():
-    print("Welcome to the Gemini 3 Agent System!")
+    print("Welcome to Maestro Agentic!")
     print("I can help you with search, finding concerts, or planning workouts.")
     print("Type 'exit' or 'quit' to stop.")
     

@@ -54,8 +54,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image (backend)
-        run: docker build -t maestro-agentic:test .
+        run: docker build -t maestro-backend:test .
 
       - name: Build Docker image (frontend)
         working-directory: ./web_ui
-        run: docker build -t maestro-agentic-ui:test .
+        run: docker build -t maestro-frontend:test .

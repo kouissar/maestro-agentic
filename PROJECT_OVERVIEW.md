@@ -1,8 +1,8 @@
-# Gemini 3 Agent System: Technical Overview
+# Maestro Agentic: Technical Overview
 
 ## Introduction
 
-This report provides an intermediate-level technical breakdown of the **Gemini 3 Agent System**. This project is a multi-agent application that combines a modern React frontend with a Python backend powered by Google's Agent Development Kit (ADK).
+This report provides an intermediate-level technical breakdown of **Maestro Agentic**. This project is a multi-agent application that combines a modern React frontend with a Python backend powered by Google's Agent Development Kit (ADK).
 
 Think of this system as a **microservices architecture** where the "services" are autonomous AI agents, each possessing a specific personality and a dedicated set of tools.
 

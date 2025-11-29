@@ -1,4 +1,4 @@
-# Gemini 3 Agent System
+# Maestro Agentic
 
 This project is a sophisticated multi-agent system built using the Google Agent Development Kit (ADK) and the Gemini 2.5 Flash model. It features an intelligent orchestrator that routes user queries to specialized agents for search, concert finding, and workout planning, all accessible via a modern React-based web interface.
 
@@ -30,7 +30,7 @@ This project is a sophisticated multi-agent system built using the Google Agent 
 
     ```bash
     git clone <repository-url>
-    cd gemini3-agent
+    cd maestro-agentic
     ```
 
 2.  **Set up the Python Environment**:
@@ -97,7 +97,7 @@ python main.py
 ## 📂 Project Structure
 
 ```
-gemini3-agent/
+maestro-agentic/
 ├── .env                  # Environment variables
 ├── main.py               # CLI entry point
 ├── orchestrator_agent/   # Main router agent

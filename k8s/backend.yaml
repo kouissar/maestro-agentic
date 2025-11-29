@@ -15,13 +15,13 @@ spec:
       dnsPolicy: Default
       containers:
         - name: backend
-          image: gemini3-backend:latest # Replace with your actual image name
+          image: maestro-backend:latest # Replace with your actual image name
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           env:
             # You should create a secret named 'gemini-secrets' with your GOOGLE_API_KEY
-            # kubectl create secret generic gemini-secrets --from-literal=GOOGLE_API_KEY=your_key
+            # kubectl create secret generic maestro-secrets --from-literal=GOOGLE_API_KEY=your_key
             - name: GOOGLE_API_KEY
               valueFrom:
                 secretKeyRef:

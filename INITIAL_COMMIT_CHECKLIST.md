@@ -20,7 +20,7 @@ This file is a one-time reference for the initial GitHub push. You can delete it
 
 ```bash
 git add .
-git commit -m "feat: initial commit - Gemini 3 Agent System with multi-agent orchestration"
+git commit -m "feat: initial commit - Maestro Agentic multi-agent orchestration system"
 ```
 
 ### Step 2: Create GitHub Repository
@@ -56,7 +56,7 @@ git commit -m "fix: remove .env from tracking"
 ## 📝 Suggested Initial Commit Message
 
 ```
-feat: initial commit - Gemini 3 Agent System
+feat: initial commit - Maestro Agentic
 
 - Multi-agent orchestration system using Google ADK
 - Specialized agents: Search, Band Tour, Workout

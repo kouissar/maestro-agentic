@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: gemini3-frontend:latest # Replace with your actual image name
+          image: maestro-frontend:latest # Replace with your actual image name
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80

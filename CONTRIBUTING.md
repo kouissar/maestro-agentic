@@ -1,6 +1,6 @@
-# Contributing to Gemini 3 Agent System
+# Contributing to Maestro Agentic
 
-Thank you for your interest in contributing to the Gemini 3 Agent System! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to Maestro Agentic! This document provides guidelines and instructions for contributing.
 
 ## 🚀 Getting Started
 

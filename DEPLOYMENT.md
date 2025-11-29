@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide explains how to deploy the Gemini 3 Agent System to a Kubernetes cluster.
+This guide explains how to deploy Maestro Agentic to a Kubernetes cluster.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ You need to build images for both the backend and the frontend.
 Run from the root of the project:
 
 ```bash
-docker build -t gemini3-backend:latest .
+docker build -t maestro-backend:latest .
 ```
 
 ### Frontend
@@ -26,7 +26,7 @@ Run from the `web_ui` directory:
 
 ```bash
 cd web_ui
-docker build -t gemini3-frontend:latest .
+docker build -t maestro-frontend:latest .
 cd ..
 ```
 
@@ -36,11 +36,11 @@ If you are using a remote cluster, you need to tag and push these images to a co
 
 ```bash
 # Example for Docker Hub
-docker tag gemini3-backend:latest yourusername/gemini3-backend:latest
-docker push yourusername/gemini3-backend:latest
+docker tag maestro-backend:latest yourusername/maestro-backend:latest
+docker push yourusername/maestro-backend:latest
 
-docker tag gemini3-frontend:latest yourusername/gemini3-frontend:latest
-docker push yourusername/gemini3-frontend:latest
+docker tag maestro-frontend:latest yourusername/maestro-frontend:latest
+docker push yourusername/maestro-frontend:latest
 ```
 
 _Note: If you do this, update the `image` fields in `k8s/backend.yaml` and `k8s/frontend.yaml` to match your registry URLs._
@@ -49,8 +49,8 @@ If you are using a local cluster (like Minikube), you might need to load the ima
 
 ```bash
 # Minikube example
-minikube image load gemini3-backend:latest
-minikube image load gemini3-frontend:latest
+minikube image load maestro-backend:latest
+minikube image load maestro-frontend:latest
 ```
 
 ## 3. Configure Secrets
@@ -58,7 +58,7 @@ minikube image load gemini3-frontend:latest
 The backend requires `GOOGLE_API_KEY`. Create a Kubernetes secret for it:
 
 ```bash
-kubectl create secret generic gemini-secrets --from-literal=GOOGLE_API_KEY=your_actual_api_key_here
+kubectl create secret generic maestro-secrets --from-literal=GOOGLE_API_KEY=your_actual_api_key_here
 ```
 
 ## 4. Deploy to Kubernetes
