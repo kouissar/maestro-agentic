@@ -161,14 +161,12 @@ function App() {
                   const lastMsg = newMessages[newMessages.length - 1];
 
                   // Smart update to handle both deltas and snapshots
-                  if (
-                    newText.length > lastMsg.text.length &&
-                    newText.startsWith(lastMsg.text)
-                  ) {
-                    // It's likely a full snapshot that includes the previous text
+                  // If newText starts with the current text, it's likely a snapshot (or identical).
+                  // We replace the text.
+                  // Otherwise, it's a delta, so we append it.
+                  if (newText.startsWith(lastMsg.text)) {
                     lastMsg.text = newText;
                   } else {
-                    // It's a delta
                     lastMsg.text += newText;
                   }
                   return newMessages;

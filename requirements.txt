@@ -2,6 +2,7 @@
 google-adk>=1.19.0
 google-genai>=1.52.0
 python-dotenv>=1.2.1
+wikipedia>=1.4.0
 
 # Note: This project uses uv for dependency management.
 # For a complete dependency lock, see uv.lock
