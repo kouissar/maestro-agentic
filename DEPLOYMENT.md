@@ -55,11 +55,13 @@ minikube image load maestro-frontend:latest
 
 ## 3. Configure Secrets
 
-The backend requires `GOOGLE_API_KEY`. Create a Kubernetes secret for it:
+The backend requires `GOOGLE_API_KEY`.
 
-```bash
-kubectl create secret generic maestro-secrets --from-literal=GOOGLE_API_KEY=your_actual_api_key_here
-```
+- **Local Development**: Create the secret manually:
+  ```bash
+  kubectl create secret generic maestro-secrets --from-literal=GOOGLE_API_KEY=your_actual_api_key_here
+  ```
+- **Jenkins Pipeline**: The pipeline automatically creates this secret using the `google-api-key` credential stored in Jenkins. Ensure you have added this credential in Jenkins.
 
 ## 4. Deploy to Kubernetes
 
