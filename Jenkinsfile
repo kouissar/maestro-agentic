@@ -8,7 +8,7 @@ pipeline {
         FRONTEND_IMAGE = "${DOCKER_REGISTRY}/maestro-frontend"
         
         // Jenkins Credentials IDs
-        DOCKER_CREDS_ID = 'docker-registry-credentials-id'
+        // DOCKER_CREDS_ID = 'docker-registry-credentials-id' // Not used for unauthenticated registries
         KUBE_CONFIG_ID = 'k8s-kubeconfig'
     }
 
@@ -35,7 +35,7 @@ pipeline {
             steps {
                 script {
                     echo 'Pushing Images to Registry...'
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", DOCKER_CREDS_ID) {
+                    docker.withRegistry("https://${DOCKER_REGISTRY}") {
                         
                         // Push Backend
                         docker.image("${BACKEND_IMAGE}:${BUILD_NUMBER}").push()
