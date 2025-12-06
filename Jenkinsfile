@@ -31,23 +31,7 @@ pipeline {
             }
         }
 
-        stage('Push Images') {
-            steps {
-                script {
-                    echo 'Pushing Images to Registry...'
-                    docker.withRegistry("https://${DOCKER_REGISTRY}") {
-                        
-                        // Push Backend
-                        docker.image("${BACKEND_IMAGE}:${BUILD_NUMBER}").push()
-                        docker.image("${BACKEND_IMAGE}:${BUILD_NUMBER}").push('latest')
-                        
-                        // Push Frontend
-                        docker.image("${FRONTEND_IMAGE}:${BUILD_NUMBER}").push()
-                        docker.image("${FRONTEND_IMAGE}:${BUILD_NUMBER}").push('latest')
-                    }
-                }
-            }
-        }
+        // Stage 'Push Images' skipped for local deployment
 
         stage('Deploy to K8s') {
             steps {
@@ -121,8 +105,8 @@ pipeline {
     post {
         always {
             // Clean up docker images to save space
-            sh "docker rmi ${BACKEND_IMAGE}:${BUILD_NUMBER} || true"
-            sh "docker rmi ${FRONTEND_IMAGE}:${BUILD_NUMBER} || true"
+            // sh "docker rmi ${BACKEND_IMAGE}:${BUILD_NUMBER} || true"
+            // sh "docker rmi ${FRONTEND_IMAGE}:${BUILD_NUMBER} || true"
         }
     }
 }
