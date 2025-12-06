@@ -102,11 +102,5 @@ pipeline {
         }
     }
     
-    post {
-        always {
-            // Clean up docker images to save space
-            // sh "docker rmi ${BACKEND_IMAGE}:${BUILD_NUMBER} || true"
-            // sh "docker rmi ${FRONTEND_IMAGE}:${BUILD_NUMBER} || true"
-        }
-    }
+
 }
