@@ -43,19 +43,21 @@ pipeline {
                     sh "sed -i 's|image: .*maestro-backend.*|image: ${BACKEND_IMAGE}:${BUILD_NUMBER}|' k8s/backend.yaml"
                     sh "sed -i 's|image: .*maestro-frontend.*|image: ${FRONTEND_IMAGE}:${BUILD_NUMBER}|' k8s/frontend.yaml"
 
-                    // withKubeConfig removed: relying on local kubectl config
-                    // Create/Update Secret safely
-                    // Ensure you have created a 'Secret text' credential in Jenkins with ID 'google-api-key'
-                    withCredentials([string(credentialsId: 'google-api-key', variable: 'GOOGLE_API_KEY')]) {
-                        sh """
-                            kubectl create secret generic maestro-secrets \
-                            --from-literal=GOOGLE_API_KEY=\${GOOGLE_API_KEY} \
-                            --dry-run=client -o yaml | kubectl apply --validate=false -f -
-                        """
-                    }
+                    // Using withKubeConfig from Kubernetes CLI Plugin
+                    withKubeConfig([credentialsId: KUBE_CONFIG_ID]) {
+                        // Create/Update Secret safely
+                        // Ensure you have created a 'Secret text' credential in Jenkins with ID 'google-api-key'
+                        withCredentials([string(credentialsId: 'google-api-key', variable: 'GOOGLE_API_KEY')]) {
+                            sh """
+                                kubectl create secret generic maestro-secrets \
+                                --from-literal=GOOGLE_API_KEY=\${GOOGLE_API_KEY} \
+                                --dry-run=client -o yaml | kubectl apply --validate=false -f -
+                            """
+                        }
 
-                    sh 'kubectl apply --validate=false -f k8s/backend.yaml'
-                    sh 'kubectl apply --validate=false -f k8s/frontend.yaml'
+                        sh 'kubectl apply --validate=false -f k8s/backend.yaml'
+                        sh 'kubectl apply --validate=false -f k8s/frontend.yaml'
+                    }
                     
                     // Optional: Force rollout restart to ensure new pods are picked up if using 'latest' tag previously
                     // sh 'kubectl rollout restart deployment/backend'
@@ -67,34 +69,35 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 script {
-                    // withKubeConfig removed: relying on local kubectl config
                     echo 'Verifying Deployment...'
                     
-                    // Wait for rollout to complete
-                    timeout(time: 2, unit: 'MINUTES') {
-                        sh 'kubectl rollout status deployment/backend'
-                        sh 'kubectl rollout status deployment/frontend'
-                    }
+                    withKubeConfig([credentialsId: KUBE_CONFIG_ID]) {
+                        // Wait for rollout to complete
+                        timeout(time: 2, unit: 'MINUTES') {
+                            sh 'kubectl rollout status deployment/backend'
+                            sh 'kubectl rollout status deployment/frontend'
+                        }
 
-                    // Port Forwarding Example for Verification
-                    // This runs port-forward in the background, checks the endpoint, and then cleans up.
-                    // Note: This assumes the Jenkins agent can bind to port 8000.
-                    echo 'Starting port-forward for health check...'
-                    sh """
-                        # Start port-forward in background
-                        kubectl port-forward service/backend-service 8000:8000 &
-                        PF_PID=\$!
-                        
-                        # Wait for connection to be established
-                        sleep 5
-                        
-                        # Check health (assuming /health or root endpoint exists, adjust as needed)
-                        # Using || true to prevent pipeline failure if just testing connectivity logic
-                        curl -v http://localhost:8000/ || echo "Could not connect to backend"
-                        
-                        # Kill the port-forward process
-                        kill \$PF_PID
-                    """
+                        // Port Forwarding Example for Verification
+                        // This runs port-forward in the background, checks the endpoint, and then cleans up.
+                        // Note: This assumes the Jenkins agent can bind to port 8000.
+                        echo 'Starting port-forward for health check...'
+                        sh """
+                            # Start port-forward in background
+                            kubectl port-forward service/backend-service 8000:8000 &
+                            PF_PID=\$!
+                            
+                            # Wait for connection to be established
+                            sleep 5
+                            
+                            # Check health (assuming /health or root endpoint exists, adjust as needed)
+                            # Using || true to prevent pipeline failure if just testing connectivity logic
+                            curl -v http://localhost:8000/ || echo "Could not connect to backend"
+                            
+                            # Kill the port-forward process
+                            kill \$PF_PID
+                        """
+                    }
                 }
             }
         }
