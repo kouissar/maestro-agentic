@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // TODO: Replace these with your actual registry and credential IDs
-        DOCKER_REGISTRY = 'your-docker-registry' // e.g., docker.io/username or gcr.io/project-id
+        DOCKER_REGISTRY = '' // Leave empty for local images, or set to 'docker.io/username'
         BACKEND_IMAGE = "${DOCKER_REGISTRY}/maestro-backend"
         FRONTEND_IMAGE = "${DOCKER_REGISTRY}/maestro-frontend"
         
