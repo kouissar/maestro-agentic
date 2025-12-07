@@ -55,8 +55,8 @@ pipeline {
                             """
                         }
 
-                        sh 'kubectl apply --validate=false -f k8s/backend.yaml'
-                        sh 'kubectl apply --validate=false -f k8s/frontend.yaml'
+                        sh 'kubectl apply  -f k8s/backend.yaml'
+                        sh 'kubectl apply  -f k8s/frontend.yaml'
                     }
                     
                     // Optional: Force rollout restart to ensure new pods are picked up if using 'latest' tag previously
