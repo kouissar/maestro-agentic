@@ -4,8 +4,8 @@ pipeline {
     environment {
         // TODO: Replace these with your actual registry and credential IDs
         DOCKER_REGISTRY = '' // Leave empty for local images, or set to 'docker.io/username'
-        BACKEND_IMAGE = "${DOCKER_REGISTRY}/maestro-backend"
-        FRONTEND_IMAGE = "${DOCKER_REGISTRY}/maestro-frontend"
+        BACKEND_IMAGE = "maestro-backend"
+        FRONTEND_IMAGE = "maestro-frontend"
         
         // Jenkins Credentials IDs
         // DOCKER_CREDS_ID = 'docker-registry-credentials-id' // Not used for unauthenticated registries
