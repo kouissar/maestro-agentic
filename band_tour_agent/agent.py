@@ -15,16 +15,22 @@
 from google.adk.agents import Agent
 from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
-from google.adk.tools import google_search
+from google.adk.tools import FunctionTool, AgentTool
+from google.adk.tools.google_search_agent_tool import create_google_search_agent
 from google.genai import types
 import asyncio
 from dotenv import load_dotenv
+from band_tour_agent.tools import get_current_datetime
 
 load_dotenv()
 
 APP_NAME = "band_tour_agent"
 USER_ID = "user1234"
 SESSION_ID = "1234"
+
+# Create a specialized agent for searching
+search_agent = create_google_search_agent(model="gemini-2.5-flash")
+search_tool = AgentTool(agent=search_agent)
 
 root_agent = Agent(
     name="band_tour_agent",
@@ -38,12 +44,14 @@ root_agent = Agent(
     2.  Identify the user's location (zip code).
     3.  If any of this information is missing, ask the user for it.
     4.  Once you have the preferences, generate a list of 3-5 similar bands or artists if the user provided specific bands. If the user provided a style, identify 3-5 popular touring bands in that style.
-    5.  Use the 'google_search' tool to find upcoming tour dates for these bands near the provided zip code. Search for queries like "Band Name tour dates [Zip Code]" or "Band Name concerts near [Zip Code]".
-    6.  Present the results to the user, including the band name, venue, date, and a link to buy tickets if available from the search snippet.
+    5.  Time Awareness: Use the 'get_current_datetime' tool to get the current date. This is CRITICAL.
+    6.  Use the 'google_search_agent' tool to find upcoming tour dates for these bands near the provided zip code. Search for "Band Name tour dates [Zip Code]" or "Band Name concerts near [Zip Code]".
+    7.  Compare the dates found with the current date to ensure they are upcoming.
+    8.  Present the results to the user, including the band name, venue, date, and a link to buy tickets if available.
     
     Be concise and helpful.
     """,
-    tools=[google_search]
+    tools=[FunctionTool(get_current_datetime), search_tool]
 )
 
 # Session and Runner

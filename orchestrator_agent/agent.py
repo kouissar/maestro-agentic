@@ -24,6 +24,7 @@ from dotenv import load_dotenv
 from search_agent.agent import root_agent as search_agent
 from band_tour_agent.agent import root_agent as band_tour_agent
 from workout_agent.agent import root_agent as workout_agent
+from finance_agent.agent import root_agent as finance_agent
 
 load_dotenv()
 
@@ -99,6 +100,28 @@ async def ask_workout_agent(query: str) -> str:
             
     return response_text
 
+async def ask_finance_agent(query: str) -> str:
+    """Delegates a request to analyze financial portfolios or answer finance questions to the finance agent.
+    
+    Args:
+        query: The user's request regarding finance or portfolio analysis.
+    """
+    session_service = InMemorySessionService()
+    sub_session_id = f"{SESSION_ID}_finance"
+    
+    await session_service.create_session(app_name="finance_agent", user_id=USER_ID, session_id=sub_session_id)
+    runner = Runner(agent=finance_agent, app_name="finance_agent", session_service=session_service)
+    
+    content = types.Content(role='user', parts=[types.Part(text=query)])
+    events = runner.run_async(user_id=USER_ID, session_id=sub_session_id, new_message=content)
+    
+    response_text = "The finance agent did not return any content."
+    async for event in events:
+        if event.is_final_response():
+            if event.content and event.content.parts:
+                response_text = event.content.parts[0].text
+            
+    return response_text
 
 root_agent = Agent(
     name="orchestrator_agent",
@@ -111,17 +134,19 @@ root_agent = Agent(
     1.  **Search Agent**: Good for general knowledge, facts, news, and looking up information on the web.
     2.  **Band Tour Agent**: Specialized in finding concerts, tour dates, and similar bands based on musical preferences and location.
     3.  **Workout Agent**: Specialized in creating, saving, and managing workout plans.
+    4.  **Finance Agent**: Specialized in financial analysis, portfolio concentration risk, and answering finance-related questions.
     
     Rules:
     -   Analyze the user's input.
     -   If the input is about music, bands, or concerts, use `ask_band_tour_agent`.
     -   If the input is about fitness, exercises, or workouts, use `ask_workout_agent`.
+    -   If the input is about finance, investing, portfolios, or analyzing CSV files related to finance, use `ask_finance_agent`.
     -   If the input is about general information, news, or facts, use `ask_search_agent`.
     -   If the input is unclear, ask for clarification.
     -   Pass the user's query exactly as is (or slightly refined for clarity) to the sub-agent.
     -   Return the response from the sub-agent to the user.
     """,
-    tools=[ask_search_agent, ask_band_tour_agent, ask_workout_agent]
+    tools=[ask_search_agent, ask_band_tour_agent, ask_workout_agent, ask_finance_agent]
 )
 
 # Session and Runner
@@ -139,8 +164,11 @@ async def call_agent_async(query):
 
     async for event in events:
         if event.is_final_response():
-            final_response = event.content.parts[0].text
-            print("Orchestrator Response: ", final_response)
+            if event.content and event.content.parts:
+                final_response = event.content.parts[0].text
+                print("Orchestrator Response: ", final_response)
+            else:
+                 print("Orchestrator Response: (No content returned)")
 
 if __name__ == "__main__":
     # Example usage

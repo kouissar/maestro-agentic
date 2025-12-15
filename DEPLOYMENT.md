@@ -93,3 +93,4 @@ kubectl port-forward service/frontend-service 8080:80
 ```
 
 Then access the app at `http://localhost:8080`.
+ 
