@@ -25,6 +25,7 @@ from search_agent.agent import root_agent as search_agent
 from band_tour_agent.agent import root_agent as band_tour_agent
 from workout_agent.agent import root_agent as workout_agent
 from finance_agent.agent import root_agent as finance_agent
+from movie_agent.agent import root_agent as movie_agent
 
 load_dotenv()
 
@@ -123,6 +124,28 @@ async def ask_finance_agent(query: str) -> str:
             
     return response_text
 
+async def ask_movie_agent(query: str) -> str:
+    """Delegates a request to recommend movies, manage watchlist, or save preferences to the movie agent.
+    
+    Args:
+        query: The user's request regarding movies.
+    """
+    session_service = InMemorySessionService()
+    sub_session_id = f"{SESSION_ID}_movie"
+    
+    await session_service.create_session(app_name="movie_agent", user_id=USER_ID, session_id=sub_session_id)
+    runner = Runner(agent=movie_agent, app_name="movie_agent", session_service=session_service)
+    
+    content = types.Content(role='user', parts=[types.Part(text=query)])
+    events = runner.run_async(user_id=USER_ID, session_id=sub_session_id, new_message=content)
+    
+    response_text = ""
+    async for event in events:
+        if event.is_final_response():
+            response_text = event.content.parts[0].text
+            
+    return response_text
+
 root_agent = Agent(
     name="orchestrator_agent",
     model="gemini-2.5-flash",
@@ -135,18 +158,20 @@ root_agent = Agent(
     2.  **Band Tour Agent**: Specialized in finding concerts, tour dates, and similar bands based on musical preferences and location.
     3.  **Workout Agent**: Specialized in creating, saving, and managing workout plans.
     4.  **Finance Agent**: Specialized in financial analysis, portfolio concentration risk, and answering finance-related questions.
+    5.  **Movie Agent**: Specialized in recommending movies, managing watchlists, and saving movie preferences.
     
     Rules:
     -   Analyze the user's input.
     -   If the input is about music, bands, or concerts, use `ask_band_tour_agent`.
     -   If the input is about fitness, exercises, or workouts, use `ask_workout_agent`.
     -   If the input is about finance, investing, portfolios, or analyzing CSV files related to finance, use `ask_finance_agent`.
+    -   If the input is about movies, actors, film recommendations, or managing a watchlist, use `ask_movie_agent`.
     -   If the input is about general information, news, or facts, use `ask_search_agent`.
     -   If the input is unclear, ask for clarification.
     -   Pass the user's query exactly as is (or slightly refined for clarity) to the sub-agent.
     -   Return the response from the sub-agent to the user.
     """,
-    tools=[ask_search_agent, ask_band_tour_agent, ask_workout_agent, ask_finance_agent]
+    tools=[ask_search_agent, ask_band_tour_agent, ask_workout_agent, ask_finance_agent, ask_movie_agent]
 )
 
 # Session and Runner
