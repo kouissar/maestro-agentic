@@ -7,9 +7,11 @@ from google.adk.sessions import InMemorySessionService, BaseSessionService, Sess
 from google.adk.events import Event
 from logger_utils import logger
 
+from model_utils import get_configured_model
+
 def get_default_model() -> str:
-    """Returns the configured Gemini model name from environment or default."""
-    return os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    """Returns the configured model name from environment or default."""
+    return get_configured_model()
 
 class FilePersistentSessionService(InMemorySessionService):
     """Extends InMemorySessionService with automatic JSON file persistence."""

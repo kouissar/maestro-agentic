@@ -6,6 +6,8 @@ wikipedia>=1.4.0
 google-api-python-client
 google-auth-oauthlib
 google-auth-httplib2
+litellm>=1.0.0
+groq>=0.11.0
 
 # Note: This project uses uv for dependency management.
 # For a complete dependency lock, see uv.lock
