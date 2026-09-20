@@ -18,6 +18,8 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 import asyncio
 from dotenv import load_dotenv
+from logger_utils import logger, log_tool_performance, log_agent_transition
+import time
 
 # Import other agents
 # Assuming running from project root
@@ -26,6 +28,11 @@ from band_tour_agent.agent import root_agent as band_tour_agent
 from workout_agent.agent import root_agent as workout_agent
 from finance_agent.agent import root_agent as finance_agent
 from movie_agent.agent import root_agent as movie_agent
+from email_agent.agent import root_agent as email_agent
+from chef_agent.agent import root_agent as chef_agent
+
+
+from session_utils import get_default_model, get_session_service
 
 load_dotenv()
 
@@ -33,86 +40,82 @@ APP_NAME = "orchestrator_agent"
 USER_ID = "user1234"
 SESSION_ID = "orchestrator_session"
 
-# Define tools to call other agents
+# Global Session Service to maintain state across tool calls and user turns
+session_service = get_session_service()
 
+async def ensure_session(app_name: str, user_id: str, session_id: str):
+    """Ensures a session exists in the service, creating it if necessary."""
+    try:
+        await session_service.get_session(app_name=app_name, user_id=user_id, session_id=session_id)
+    except Exception:
+        await session_service.create_session(app_name=app_name, user_id=user_id, session_id=session_id)
+
+@log_tool_performance("search_agent")
 async def ask_search_agent(query: str) -> str:
-    """Delegates a general search or information query to the search agent.
-    
-    Args:
-        query: The user's question or search query.
-    """
-    session_service = InMemorySessionService()
+    """Delegates a general search or information query to the search agent."""
+    log_agent_transition("orchestrator_agent", "search_agent")
+    local_service = get_session_service()
     sub_session_id = f"{SESSION_ID}_search"
+    await local_service.create_session(app_name="search_agent", user_id=USER_ID, session_id=sub_session_id)
     
-    await session_service.create_session(app_name="search_agent", user_id=USER_ID, session_id=sub_session_id)
-    runner = Runner(agent=search_agent, app_name="search_agent", session_service=session_service)
-    
+    runner = Runner(agent=search_agent, app_name="search_agent", session_service=local_service)
     content = types.Content(role='user', parts=[types.Part(text=query)])
     events = runner.run_async(user_id=USER_ID, session_id=sub_session_id, new_message=content)
     
     response_text = ""
     async for event in events:
         if event.is_final_response():
-            response_text = event.content.parts[0].text
-            
+            if event.content and event.content.parts:
+                response_text = event.content.parts[0].text
     return response_text
 
+@log_tool_performance("band_tour_agent")
 async def ask_band_tour_agent(query: str) -> str:
-    """Delegates a request to find concerts or band tour dates to the band tour agent.
-    
-    Args:
-        query: The user's request regarding bands, concerts, or tour dates.
-    """
-    session_service = InMemorySessionService()
+    """Delegates a request to find concerts or band tour dates."""
+    log_agent_transition("orchestrator_agent", "band_tour_agent")
+    local_service = get_session_service()
     sub_session_id = f"{SESSION_ID}_band"
+    await local_service.create_session(app_name="band_tour_agent", user_id=USER_ID, session_id=sub_session_id)
     
-    await session_service.create_session(app_name="band_tour_agent", user_id=USER_ID, session_id=sub_session_id)
-    runner = Runner(agent=band_tour_agent, app_name="band_tour_agent", session_service=session_service)
-    
+    runner = Runner(agent=band_tour_agent, app_name="band_tour_agent", session_service=local_service)
     content = types.Content(role='user', parts=[types.Part(text=query)])
     events = runner.run_async(user_id=USER_ID, session_id=sub_session_id, new_message=content)
     
     response_text = ""
     async for event in events:
         if event.is_final_response():
-            response_text = event.content.parts[0].text
-            
+            if event.content and event.content.parts:
+                response_text = event.content.parts[0].text
     return response_text
 
+@log_tool_performance("workout_agent")
 async def ask_workout_agent(query: str) -> str:
-    """Delegates a request to generate, save, or list workouts to the workout agent.
-    
-    Args:
-        query: The user's request regarding workouts.
-    """
-    session_service = InMemorySessionService()
+    """Delegates a request regarding workouts."""
+    log_agent_transition("orchestrator_agent", "workout_agent")
+    local_service = get_session_service()
     sub_session_id = f"{SESSION_ID}_workout"
+    await local_service.create_session(app_name="workout_agent", user_id=USER_ID, session_id=sub_session_id)
     
-    await session_service.create_session(app_name="workout_agent", user_id=USER_ID, session_id=sub_session_id)
-    runner = Runner(agent=workout_agent, app_name="workout_agent", session_service=session_service)
-    
+    runner = Runner(agent=workout_agent, app_name="workout_agent", session_service=local_service)
     content = types.Content(role='user', parts=[types.Part(text=query)])
     events = runner.run_async(user_id=USER_ID, session_id=sub_session_id, new_message=content)
     
     response_text = ""
     async for event in events:
         if event.is_final_response():
-            response_text = event.content.parts[0].text
-            
+            if event.content and event.content.parts:
+                response_text = event.content.parts[0].text
     return response_text
 
+@log_tool_performance("finance_agent")
 async def ask_finance_agent(query: str) -> str:
-    """Delegates a request to analyze financial portfolios or answer finance questions to the finance agent.
-    
-    Args:
-        query: The user's request regarding finance or portfolio analysis.
-    """
-    session_service = InMemorySessionService()
+    """Delegates a request to the finance agent."""
+    log_agent_transition("orchestrator_agent", "finance_agent")
+    local_service = get_session_service()
     sub_session_id = f"{SESSION_ID}_finance"
+    await local_service.create_session(app_name="finance_agent", user_id=USER_ID, session_id=sub_session_id)
     
-    await session_service.create_session(app_name="finance_agent", user_id=USER_ID, session_id=sub_session_id)
-    runner = Runner(agent=finance_agent, app_name="finance_agent", session_service=session_service)
-    
+    runner = Runner(agent=finance_agent, app_name="finance_agent", session_service=local_service)
     content = types.Content(role='user', parts=[types.Part(text=query)])
     events = runner.run_async(user_id=USER_ID, session_id=sub_session_id, new_message=content)
     
@@ -121,79 +124,129 @@ async def ask_finance_agent(query: str) -> str:
         if event.is_final_response():
             if event.content and event.content.parts:
                 response_text = event.content.parts[0].text
-            
     return response_text
 
+@log_tool_performance("movie_agent")
 async def ask_movie_agent(query: str) -> str:
-    """Delegates a request to recommend movies, manage watchlist, or save preferences to the movie agent.
-    
-    Args:
-        query: The user's request regarding movies.
-    """
-    session_service = InMemorySessionService()
+    """Delegates a request to the movie agent."""
+    log_agent_transition("orchestrator_agent", "movie_agent")
+    local_service = get_session_service()
     sub_session_id = f"{SESSION_ID}_movie"
+    await local_service.create_session(app_name="movie_agent", user_id=USER_ID, session_id=sub_session_id)
     
-    await session_service.create_session(app_name="movie_agent", user_id=USER_ID, session_id=sub_session_id)
-    runner = Runner(agent=movie_agent, app_name="movie_agent", session_service=session_service)
-    
+    runner = Runner(agent=movie_agent, app_name="movie_agent", session_service=local_service)
     content = types.Content(role='user', parts=[types.Part(text=query)])
     events = runner.run_async(user_id=USER_ID, session_id=sub_session_id, new_message=content)
     
     response_text = ""
     async for event in events:
         if event.is_final_response():
-            response_text = event.content.parts[0].text
-            
+            if event.content and event.content.parts:
+                response_text = event.content.parts[0].text
     return response_text
+
+@log_tool_performance("email_agent")
+async def ask_email_agent(query: str) -> str:
+    """Delegates a request related to email management."""
+    log_agent_transition("orchestrator_agent", "email_agent")
+    local_service = get_session_service()
+    sub_session_id = f"{SESSION_ID}_email"
+    await local_service.create_session(app_name="email_agent", user_id=USER_ID, session_id=sub_session_id)
+    
+    runner = Runner(agent=email_agent, app_name="email_agent", session_service=local_service)
+    content = types.Content(role='user', parts=[types.Part(text=query)])
+    events = runner.run_async(user_id=USER_ID, session_id=sub_session_id, new_message=content)
+    
+    response_text = ""
+    async for event in events:
+        if event.is_final_response():
+            if event.content and event.content.parts:
+                response_text = event.content.parts[0].text
+    return response_text
+
+@log_tool_performance("chef_agent")
+async def ask_chef_agent(query: str) -> str:
+    """Delegates a request related to cooking, recipes, or meal planning."""
+    log_agent_transition("orchestrator_agent", "chef_agent")
+    local_service = get_session_service()
+    sub_session_id = f"{SESSION_ID}_chef"
+    await local_service.create_session(app_name="chef_agent", user_id=USER_ID, session_id=sub_session_id)
+    
+    runner = Runner(agent=chef_agent, app_name="chef_agent", session_service=local_service)
+    content = types.Content(role='user', parts=[types.Part(text=query)])
+    events = runner.run_async(user_id=USER_ID, session_id=sub_session_id, new_message=content)
+    
+    response_text = ""
+    async for event in events:
+        if event.is_final_response():
+            if event.content and event.content.parts:
+                response_text = event.content.parts[0].text
+    return response_text
+
+def _log_subagent_start(callback_context):
+    agent_name = getattr(getattr(callback_context, "agent", None), "name", "unknown")
+    log_agent_transition("orchestrator_agent", agent_name)
 
 root_agent = Agent(
     name="orchestrator_agent",
-    model="gemini-2.5-flash",
-    description="Orchestrator agent that routes user queries to specialized agents.",
+    model=get_default_model(),
+    description="Orchestrator agent that routes user queries to specialized sub-agents.",
     instruction="""
-    You are an intelligent orchestrator. Your job is to understand the user's request and route it to the most appropriate specialized agent.
+    You are an intelligent orchestrator. Your job is to understand the user's request and delegate it to the appropriate sub-agent.
     
-    Available Agents:
-    1.  **Search Agent**: Good for general knowledge, facts, news, and looking up information on the web.
-    2.  **Band Tour Agent**: Specialized in finding concerts, tour dates, and similar bands based on musical preferences and location.
-    3.  **Workout Agent**: Specialized in creating, saving, and managing workout plans.
-    4.  **Finance Agent**: Specialized in financial analysis, portfolio concentration risk, and answering finance-related questions.
-    5.  **Movie Agent**: Specialized in recommending movies, managing watchlists, and saving movie preferences.
-    
-    Rules:
-    -   Analyze the user's input.
-    -   If the input is about music, bands, or concerts, use `ask_band_tour_agent`.
-    -   If the input is about fitness, exercises, or workouts, use `ask_workout_agent`.
-    -   If the input is about finance, investing, portfolios, or analyzing CSV files related to finance, use `ask_finance_agent`.
-    -   If the input is about movies, actors, film recommendations, or managing a watchlist, use `ask_movie_agent`.
-    -   If the input is about general information, news, or facts, use `ask_search_agent`.
-    -   If the input is unclear, ask for clarification.
-    -   Pass the user's query exactly as is (or slightly refined for clarity) to the sub-agent.
-    -   Return the response from the sub-agent to the user.
+    Sub-Agents:
+    1. Search Agent: General knowledge, facts, news, and looking up information on the web.
+    2. Band Tour Agent: Finding concerts, tour dates, and similar bands based on musical preferences and location.
+    3. Workout Agent: Creating, saving, and managing workout plans.
+    4. Finance Agent: Financial analysis, portfolio concentration risk, and answering finance-related questions.
+    5. Movie Agent: Recommending movies, managing watchlists, and saving movie preferences.
+    6. Email Agent: Managing communication, sending, searching, and summarizing emails using Gmail.
+    7. Chef Agent: Recipes, meal planning, cooking advice, and grocery list management.
     """,
-    tools=[ask_search_agent, ask_band_tour_agent, ask_workout_agent, ask_finance_agent, ask_movie_agent]
+    sub_agents=[search_agent, band_tour_agent, workout_agent, finance_agent, movie_agent, email_agent, chef_agent],
+    before_agent_callback=_log_subagent_start
 )
 
 # Session and Runner
 async def setup_session_and_runner():
-    session_service = InMemorySessionService()
-    session = await session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
-    runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
+    service = get_session_service()
+    session = await service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
+    runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=service)
     return session, runner
 
 # Agent Interaction
 async def call_agent_async(query):
-    content = types.Content(role='user', parts=[types.Part(text=query)])
-    session, runner = await setup_session_and_runner()
-    events = runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content)
+    start_time = time.time()
+    logger.info(f"Orchestrator received query: {query}", extra={"extra_data": {"event_type": "query_received", "query": query}})
+    
+    final_response = ""
+    try:
+        content = types.Content(role='user', parts=[types.Part(text=query)])
+        session, runner = await setup_session_and_runner()
+        events = runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content)
 
-    async for event in events:
-        if event.is_final_response():
-            if event.content and event.content.parts:
-                final_response = event.content.parts[0].text
-                print("Orchestrator Response: ", final_response)
-            else:
-                 print("Orchestrator Response: (No content returned)")
+        async for event in events:
+            if event.is_final_response():
+                if event.content and event.content.parts:
+                    final_response = event.content.parts[0].text
+                    print("Orchestrator Response: ", final_response)
+                else:
+                     print("Orchestrator Response: (No content returned)")
+        
+        duration = time.time() - start_time
+        logger.info("Orchestrator finished query", extra={"extra_data": {
+            "event_type": "query_completed",
+            "duration_seconds": round(duration, 4),
+            "response_length": len(final_response) if final_response else 0
+        }})
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"Orchestrator query failed: {str(e)}", extra={"extra_data": {
+            "event_type": "query_failed",
+            "error_message": str(e),
+            "duration_seconds": round(duration, 4)
+        }}, exc_info=True)
+        print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     # Example usage

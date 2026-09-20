@@ -20,26 +20,29 @@ Instead of relying on a single monolithic prompt to handle all user requests, th
 
 The core logic resides in the Python backend. The `workout_agent/agent.py` file serves as a prime example of how these agents are constructed.
 
-### The Agent Definition
+### The Agent Definition & Native Sub-Agents
 
 Agents are defined using the `Agent` class from the ADK. Key components include:
 
 ```python
 root_agent = Agent(
-    name="workout_agent",
-    model="gemini-2.5-flash",
-    instruction="You are a fitness assistant...",
-    tools=[save_workout, list_workouts]  # <--- The Critical Component
+    name="orchestrator_agent",
+    model=get_default_model(),
+    description="Orchestrator agent...",
+    sub_agents=[search_agent, band_tour_agent, workout_agent, finance_agent, movie_agent, email_agent, chef_agent],
+    before_agent_callback=on_agent_start
 )
 ```
 
-- **Tools**: The `tools` argument is the most powerful feature. It allows you to pass actual Python functions (like `save_workout`) to the LLM.
-- **Execution Flow**: The model does not execute code directly. Instead, it outputs a structured request to call a function. The ADK runtime intercepts this request, executes the Python function, and feeds the return value back to the model as context.
+- **Native Sub-Agents (`sub_agents`)**: The ADK engine handles multi-agent routing natively, maintaining shared session context across transfers and streaming transition events in real time.
+- **Model Standardization**: Models use `get_default_model()`, making the underlying model configurable (e.g. `gemini-2.5-flash` or `gemini-3.0-flash`) via the `GEMINI_MODEL` environment variable.
+- **Tools**: Specialized agents use function tools (like `save_workout`, `analyze_portfolio_risk`, `search_gmail_messages`) passed to the LLM.
+- **Execution Flow**: The model outputs structured requests to call functions or transfer to sub-agents. The ADK runtime intercepts these requests, executes the target function or sub-agent, and returns the result to the conversation.
 
 ### Runner & Session Management
 
-- **Runner**: Manages the conversation loop (User Input -> Model -> Tool Call -> Tool Output -> Model -> Final Response).
-- **Session**: Maintains the state of the conversation across multiple turns.
+- **Runner**: Manages the multi-agent conversation loop (User Input -> Orchestrator -> Sub-Agent -> Tool Call -> Response).
+- **Session Service**: Powered by `session_utils.py`, supporting persistent JSON sessions (`FilePersistentSessionService`) and `InMemorySessionService`.
 
 ## 3. Frontend (React + Vite)
 

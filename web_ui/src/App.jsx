@@ -17,7 +17,46 @@ function App() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null);
+  const [status, setStatus] = useState("");
   const messagesEndRef = useRef(null);
+
+  const toolLabels = {
+    // Native sub-agent transfers
+    search_agent: "Searching with Search Agent...",
+    band_tour_agent: "Checking tour dates with Band Tour Agent...",
+    workout_agent: "Planning workout with Workout Agent...",
+    finance_agent: "Analyzing finances with Finance Agent...",
+    movie_agent: "Recommending movies with Movie Agent...",
+    email_agent: "Accessing Gmail with Email Agent...",
+    chef_agent: "Consulting Chef Agent for recipes...",
+
+    // Specific function tools
+    google_search: "Searching Google...",
+    save_workout: "Saving workout plan...",
+    list_workouts: "Retrieving workout list...",
+    read_workout: "Reading workout details...",
+    get_movement_image: "Generating movement illustration...",
+    analyze_portfolio_risk: "Analyzing portfolio risk...",
+    get_current_datetime: "Checking date and time...",
+    send_gmail_message: "Sending Gmail message...",
+    search_gmail_messages: "Searching Gmail messages...",
+    get_gmail_message_details: "Reading email details...",
+    reply_to_gmail_message: "Replying to Gmail message...",
+    save_recipe: "Saving recipe...",
+    list_recipes: "Listing saved recipes...",
+    add_to_grocery_list: "Updating grocery list...",
+    save_preferences: "Saving user preferences...",
+    add_to_watchlist: "Updating movie watchlist...",
+
+    // Legacy function wrappers
+    ask_search_agent: "Searching the web...",
+    ask_band_tour_agent: "Checking tour dates...",
+    ask_workout_agent: "Planning your workout...",
+    ask_finance_agent: "Analyzing financial data...",
+    ask_movie_agent: "Searching for movies...",
+    ask_email_agent: "Accessing your Gmail...",
+    ask_chef_agent: "Planning meal...",
+  };
 
   useEffect(() => {
     // Create a session on mount
@@ -87,6 +126,7 @@ function App() {
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
+    setStatus("Thinking...");
 
     try {
       const response = await fetch("/run_sse", {
@@ -112,6 +152,7 @@ function App() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let agentMsg = { role: "agent", text: "" };
+      let hasReceivedText = false;
 
       // Add a placeholder for the agent response
       setMessages((prev) => [...prev, agentMsg]);
@@ -127,7 +168,10 @@ function App() {
           if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6));
-              console.log("Received SSE data:", data); // Debug log
+              
+              if (data.error) {
+                throw new Error(data.error.message || "Endpoint error");
+              }
 
               let newText = "";
 
@@ -136,9 +180,14 @@ function App() {
                 for (const part of data.content.parts) {
                   if (part.text) {
                     newText += part.text;
+                    hasReceivedText = true;
+                    // Reset status to Thinking once text starts flowing
+                    setStatus("Thinking...");
                   } else if (part.functionCall) {
-                    console.log("Function call received:", part.functionCall);
-                    // Optionally show a status update
+                    const toolName = part.functionCall.name;
+                    if (toolLabels[toolName]) {
+                      setStatus(toolLabels[toolName]);
+                    }
                   }
                 }
               }
@@ -151,6 +200,7 @@ function App() {
                 for (const part of data.candidates[0].content.parts) {
                   if (part.text) {
                     newText += part.text;
+                    hasReceivedText = true;
                   }
                 }
               }
@@ -178,17 +228,33 @@ function App() {
           }
         }
       }
+
+      if (!hasReceivedText) {
+        throw new Error("The agent did not return any text content.");
+      }
+
     } catch (e) {
       console.error("Error sending message:", e);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "agent",
-          text: "Sorry, I encountered an error. Please try again.",
-        },
-      ]);
+      let errorText = "Sorry, I encountered an error. Please try again.";
+      
+      if (e.message.includes("429") || e.message.includes("ResourceExhausted")) {
+        errorText = "🚦 **Quota Exceeded**: The Gemini API usage limit has been reached for today. Please wait a moment or check your API quota in Google AI Studio.";
+      }
+
+      setMessages((prev) => {
+        // Filter out any empty messages added as placeholders
+        const filtered = prev.filter(m => m.text !== "");
+        return [
+          ...filtered,
+          {
+            role: "agent",
+            text: errorText,
+          },
+        ];
+      });
     } finally {
       setIsLoading(false);
+      setStatus("");
     }
   };
 
@@ -223,9 +289,12 @@ function App() {
             )}
           </div>
         ))}
-        {isLoading && (
-          <div className="message agent">
-            <span className="typing-indicator">Thinking...</span>
+        {isLoading && status && (
+          <div className="status-container">
+            <div className="status-pill">
+              <div className="status-dot"></div>
+              {status}
+            </div>
           </div>
         )}
         <div ref={messagesEndRef} />

@@ -3,8 +3,8 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 import asyncio
-import os
 from dotenv import load_dotenv
+from session_utils import get_default_model, get_session_service
 from finance_agent.tools import get_current_datetime, analyze_portfolio_risk
 
 load_dotenv()
@@ -15,7 +15,7 @@ SESSION_ID = "1234"
 
 root_agent = Agent(
     name="finance_agent",
-    model="gemini-2.5-flash",
+    model=get_default_model(),
     description="Agent to help with financial questions and analysis.",
     instruction="""
     You are a helpful finance assistant.
@@ -33,7 +33,7 @@ root_agent = Agent(
 
 # Session and Runner
 async def setup_session_and_runner():
-    session_service = InMemorySessionService()
+    session_service = get_session_service()
     session = await session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
     runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
     return session, runner

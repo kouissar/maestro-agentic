@@ -18,8 +18,8 @@ from google.adk.sessions import InMemorySessionService
 from google.adk.tools import FunctionTool, AgentTool
 from google.adk.tools.google_search_agent_tool import create_google_search_agent
 from google.genai import types
-import asyncio
 from dotenv import load_dotenv
+from session_utils import get_default_model, get_session_service
 from band_tour_agent.tools import get_current_datetime
 
 load_dotenv()
@@ -29,12 +29,12 @@ USER_ID = "user1234"
 SESSION_ID = "1234"
 
 # Create a specialized agent for searching
-search_agent = create_google_search_agent(model="gemini-2.5-flash")
+search_agent = create_google_search_agent(model=get_default_model())
 search_tool = AgentTool(agent=search_agent)
 
 root_agent = Agent(
     name="band_tour_agent",
-    model="gemini-2.5-flash",
+    model=get_default_model(),
     description="Agent to find concerts for bands similar to user preferences near a specific zip code.",
     instruction="""
     You are a helpful assistant that helps users find concerts.
@@ -56,7 +56,7 @@ root_agent = Agent(
 
 # Session and Runner
 async def setup_session_and_runner():
-    session_service = InMemorySessionService()
+    session_service = get_session_service()
     session = await session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
     runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
     return session, runner

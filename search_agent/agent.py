@@ -17,8 +17,8 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.adk.tools import google_search
 from google.genai import types
-import asyncio
 from dotenv import load_dotenv
+from session_utils import get_default_model, get_session_service
 
 load_dotenv()
 
@@ -29,7 +29,7 @@ SESSION_ID="1234"
 
 root_agent = Agent(
     name="search_agent",
-    model="gemini-2.5-flash",
+    model=get_default_model(),
     description="Agent to answer questions using Google Search.",
     instruction="""
     You are a helpful assistant with access to Google Search.
@@ -43,7 +43,7 @@ root_agent = Agent(
 
 # Session and Runner
 async def setup_session_and_runner():
-    session_service = InMemorySessionService()
+    session_service = get_session_service()
     session = await session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
     runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
     return session, runner

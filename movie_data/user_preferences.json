@@ -2,6 +2,18 @@
     "watchlist": [
         "Django Unleashed",
         "the hatful eight",
-        "the martian"
+        "the martian",
+        "The Terminal",
+        "The Revenant (2015)",
+        "12 angry man"
+    ],
+    "favorite_actors": [
+        "Leonardo DiCaprio",
+        "Denzel Washington",
+        "Christian Bale"
+    ],
+    "liked_movies": [
+        "American Primeval",
+        "Hostiles"
     ]
 }
